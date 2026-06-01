@@ -4,66 +4,97 @@ import java.util.Scanner;
 
 public class Juego {
 
-    public static void main(String[] args) {
+    private Mascota mascota;
+    private Scanner teclado;
 
-        Scanner sc = new Scanner(System.in);
+    public Juego(Mascota mascota) {
+        this.mascota = mascota;
+        teclado = new Scanner(System.in);
+    }
 
-        System.out.println("¡Bienvenido al Simulador de Mascota Virtual!");
-        System.out.print("Para empezar, ¿cómo se llama tu mascota?: ");
+    // Iniciar juego
+    public void iniciar() {
 
-        String nombre = sc.nextLine();
+        int opcion;
 
-        // Crear objeto de la clase Mascota
-        Mascota miMascota = new Mascota(nombre, nombre, 0);
+        do {
 
-        boolean jugando = true;
+            mostrarEstado();
+            mostrarMenu();
 
-        // Ciclo while
-        while (jugando) {
+            opcion = teclado.nextInt();
 
-            // Menú del juego
-            System.out.println("\n--- MENÚ DEL JUEGO ---");
-            System.out.println("1. Mostrar estado de la mascota");
-            System.out.println("2. Alimentar");
-            System.out.println("3. Jugar");
-            System.out.println("4. Dormir");
-            System.out.println("5. Salir del juego");
-            System.out.print("Elige una opción (1-5): ");
-
-            int opcion = sc.nextInt();
-
-            // Opciones
             switch (opcion) {
 
                 case 1:
-                    miMascota.mostrarEstado();
+                    mascota.comer();
+                    mascota.pasarTiempo();
                     break;
 
                 case 2:
-                    miMascota.alimentar();
+                    mascota.jugar();
+                    mascota.pasarTiempo();
                     break;
 
                 case 3:
-                    miMascota.jugar();
+                    mascota.dormir();
+                    mascota.pasarTiempo();
                     break;
 
                 case 4:
-                    miMascota.dormir();
-                    break;
-
-                case 5:
-                    System.out.println("\n¡Gracias por jugar! "
-                            + miMascota.getNombre()
-                            + " te va a extrañar.");
-
-                    jugando = false;
+                    System.out.println("\n👋 Gracias por jugar.");
                     break;
 
                 default:
-                    System.out.println("\n[Error] Opción no válida.");
+                    System.out.println("\n❌ Opción inválida.");
             }
+
+            verificarEstado();
+
+        } while (opcion != 4);
+    }
+
+    // Menú
+    public void mostrarMenu() {
+
+        System.out.println("\n========= MENÚ =========");
+        System.out.println("1. Alimentar");
+        System.out.println("2. Jugar");
+        System.out.println("3. Dormir");
+        System.out.println("4. Salir");
+        System.out.print("Seleccione una opción: ");
+    }
+
+    // Estado mascota
+    public void mostrarEstado() {
+
+        System.out.println("\n==============================");
+        System.out.println("🐾 MASCOTA: " + mascota.getNombre());
+        System.out.println("==============================");
+        System.out.println("🍖 Hambre: " + mascota.getHambre() + "%");
+        System.out.println("⚡ Energía: " + mascota.getEnergia() + "%");
+        System.out.println("😊 Felicidad: " + mascota.getFelicidad() + "%");
+    }
+
+    // Alertas
+    public void verificarEstado() {
+
+        if (mascota.getHambre() >= 80) {
+            System.out.println("⚠ Tu mascota tiene mucha hambre.");
         }
 
-        sc.close();
+        if (mascota.getEnergia() <= 20) {
+            System.out.println("⚠ Tu mascota está muy cansada.");
+        }
+
+        if (mascota.getFelicidad() <= 20) {
+            System.out.println("⚠ Tu mascota está triste.");
+        }
+
+        if (mascota.getHambre() >= 100) {
+            System.out.println("\n💀 Fin del juego.");
+            System.out.println("Tu mascota sufrió por exceso de hambre.");
+            System.exit(0);
+        }
     }
 }
