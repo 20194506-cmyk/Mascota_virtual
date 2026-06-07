@@ -2,97 +2,149 @@ package mascota_virtual;
 
 public class Mascota {
 
-    // Atributos
     private String nombre;
     private int hambre;
     private int energia;
     private int felicidad;
 
-    // Constructor
+    private int nivel;
+    private int experiencia;
+
+    private int monedas;
+    private int dias;
+    private String hora;
+    private boolean viva;
+
+    private int vecesAlimentado;
+    private int vecesJugado;
+    private boolean durmioHoy;
+
     public Mascota(String nombre) {
         this.nombre = nombre;
-        this.hambre = 50;
-        this.energia = 50;
-        this.felicidad = 50;
+
+        hambre    = 30;
+        energia   = 70;
+        felicidad = 60;
+
+        nivel       = 1;
+        experiencia = 35;
+
+        monedas  = 125;
+        dias     = 3;
+        hora     = "Mañana";
+        viva     = true;
+
+        vecesAlimentado = 0;
+        vecesJugado     = 0;
+        durmioHoy       = false;
     }
 
-    // Alimentar mascota
-    public void comer() {
-        hambre -= 20;
-        felicidad += 5;
+    // ================= ACCIONES =================
 
-        if (hambre < 0) {
-            hambre = 0;
-        }
+    public void alimentar() {
+        hambre    = Math.max(0,   hambre    - 20);
+        energia   = Math.min(100, energia   + 5);
+        felicidad = Math.min(100, felicidad + 5);
 
-        if (felicidad > 100) {
-            felicidad = 100;
-        }
+        vecesAlimentado++;
 
-        System.out.println("\n🍖 " + nombre + " ha comido.");
+        ganarExperiencia(15);
+        ganarMonedas(10);
+        verificarVida();
     }
 
-    // Jugar con mascota
     public void jugar() {
-        felicidad += 15;
-        energia -= 10;
-        hambre += 10;
+        felicidad = Math.min(100, felicidad + 20);
+        energia   = Math.max(0,   energia   - 15);
+        hambre    = Math.min(100, hambre    + 10);
 
-        limitarValores();
+        vecesJugado++;
 
-        System.out.println("\n🎮 " + nombre + " se está divirtiendo.");
+        ganarExperiencia(25);
+        ganarMonedas(15);
+        verificarVida();
     }
 
-    // Dormir
     public void dormir() {
-        energia += 25;
+        energia   = Math.min(100, energia   + 40);
+        hambre    = Math.min(100, hambre    + 15);
+        felicidad = Math.max(0,   felicidad - 5);
 
-        if (energia > 100) {
-            energia = 100;
-        }
+        durmioHoy = true;
 
-        System.out.println("\n😴 " + nombre + " ha descansado.");
+        ganarExperiencia(10);
+        ganarMonedas(5);
+        verificarVida();
     }
 
-    // Paso del tiempo
+    public void recibirRecompensaMisiones() {
+        this.felicidad = Math.min(100, this.felicidad + 100);
+    }
+
+    public void reiniciarMisionesDiarias() {
+        this.vecesAlimentado = 0;
+        this.vecesJugado = 0;
+        this.durmioHoy = false;
+    }
+
+    // ================= TIEMPO =================
+
     public void pasarTiempo() {
-        hambre += 5;
-        energia -= 5;
-        felicidad -= 3;
+        hambre    = Math.min(100, hambre    + 10);
+        energia   = Math.max(0,   energia   - 8);
+        felicidad = Math.max(0,   felicidad - 5);
 
-        limitarValores();
+        dias++;
+        verificarVida();
     }
 
-    // Control de límites
-    private void limitarValores() {
+    // ================= VIDA =================
 
-        if (hambre > 100) {
-            hambre = 100;
+    private void verificarVida() {
+        if (hambre    >= 100) viva = false;
+        if (energia   <= 0)   viva = false;
+        if (felicidad <= 0)   viva = false;
+    }
+
+    public boolean estaViva() { return viva; }
+
+    // ================= PROGRESO =================
+
+    private void ganarExperiencia(int xp) {
+        experiencia += xp;
+
+        while (experiencia >= 100) {
+            experiencia -= 100;
+            nivel++;
         }
-
-        if (energia < 0) {
-            energia = 0;
-        }
-
-        if (felicidad < 0) {
-            felicidad = 0;
-        }
     }
 
-    // Getters
-    public String getNombre() {
-        return nombre;
+    private void ganarMonedas(int cantidad) {
+        monedas += cantidad;
     }
 
-    public int getHambre() {
-        return hambre;
+    // ================= ESTADO =================
+
+    public String getEstado() {
+        if (hambre    >= 80) return "😫 Hambrienta";
+        if (energia   <= 20) return "😴 Cansada";
+        if (felicidad <= 30) return "😢 Triste";
+        if (felicidad >= 80) return "¡Muy Feliz!";
+        return "😊 Normal";
     }
 
-    public int getEnergia() {
-        return energia;
-    }
+    // ================= GETTERS =================
 
-    public int getFelicidad() {
-        return felicidad;
-    }
+    public String  getNombre()          { return nombre; }
+    public int     getHambre()          { return hambre; }
+    public int     getEnergia()         { return energia; }
+    public int     getFelicidad()       { return felicidad; }
+    public int     getNivel()           { return nivel; }
+    public int     getExperiencia()     { return experiencia; }
+    public int     getMonedas()         { return monedas; }
+    public int     getDias()            { return dias; }
+    public String  getHora()            { return hora; }
+    public int     getVecesAlimentado() { return vecesAlimentado; }
+    public int     getVecesJugado()     { return vecesJugado; }
+    public boolean getDurmioHoy()       { return durmioHoy; }
 }
