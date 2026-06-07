@@ -9,20 +9,23 @@ import javax.sound.sampled.Clip;
 public class Juego {
 
     private Mascota mascota;
-    private Scanner scanner;
-    private ArrayList<String> registro;
+    private final Scanner scanner;
+    private final ArrayList<String> registro;
 
+    // Colores ANSI Estilizados
     private static final String RESET    = "\u001B[0m";
     private static final String MAGENTA  = "\u001B[38;5;201m";
     private static final String CIAN     = "\u001B[38;5;51m";
     private static final String AMARILLO = "\u001B[38;5;226m";
     private static final String MORADO   = "\u001B[38;5;135m";
-    private static final String GRIS     = "\u001B[38;5;240m";
+    private static final String GRIS     = "\u001B[38;5;242m";
     private static final String ROJO     = "\u001B[38;5;196m";
     private static final String VERDE    = "\u001B[38;5;46m";
-    private static final String NARANJA  = "\u001B[38;5;208m";
-
-    private static final int ANCHO_REGISTRO = 74;
+    
+    // Anchos fijos originales
+    private static final int ANCHO_IZQ = 36; 
+    private static final int ANCHO_DER = 42; 
+    private static final int ANCHO_TOTAL = 82; 
 
     public Juego() {
         scanner  = new Scanner(System.in);
@@ -32,7 +35,6 @@ public class Juego {
     private void reproducirMusica() {
         try {
             java.net.URL urlMusica = getClass().getResource("/mascota_virtual/Music_menu.wav");
-
             if (urlMusica != null) {
                 AudioInputStream audioStream = AudioSystem.getAudioInputStream(urlMusica);
                 Clip clipMusica = AudioSystem.getClip();
@@ -40,27 +42,29 @@ public class Juego {
                 clipMusica.loop(Clip.LOOP_CONTINUOUSLY);
                 clipMusica.start();
             } else {
-                System.out.println(AMARILLO + "⚠️ Alerta: No se encontró 'Music_menu.wav' dentro del paquete mascota_virtual." + RESET);
+                System.out.println(AMARILLO + "⚠️ [Música] No se encontró 'Music_menu.wav'." + RESET);
             }
         } catch (Exception e) {
-            System.out.println(ROJO + "⚠️ Error al reproducir la música: " + e.getMessage() + RESET);
+            System.out.println(ROJO + "⚠️ Error de audio: " + e.getMessage() + RESET);
         }
     }
 
     public void iniciar() {
         reproducirMusica();
+        limpiarPantalla();
         mostrarPortada();
 
-        System.out.print(MAGENTA + "🐾 Nombre de tu mascota: " + CIAN);
+        System.out.print(MAGENTA + " 🐾 ¿Qué nombre le darás a tu mascota?: " + CIAN);
         String nombre = scanner.nextLine().trim();
         if (nombre.isEmpty()) nombre = "Pelusa";
         System.out.print(RESET);
 
         mascota = new Mascota(nombre);
-        agregarRegistro("🐾 ¡" + nombre + " ha llegado al mundo!");
+        agregarRegistro("🐾 ¡" + nombre + " ha nacido! Cuídalo muy bien.");
 
         while (true) {
             if (!mascota.estaViva()) {
+                limpiarPantalla();
                 mostrarGameOver();
                 break;
             }
@@ -72,165 +76,144 @@ public class Juego {
     }
 
     private void mostrarPortada() {
-        System.out.println(MAGENTA +
-            "╔══════════════════════════════════════════════════╗\n" +
-            "║                                                  ║\n" +
-            "║   " + CIAN + "██████╗ ███████╗████████╗" +
-            MORADO + " ██╗    ██╗ ██████╗ ██████╗ ██╗     ██████╗" + MAGENTA + "  ║\n" +
-            "║   " + CIAN + "██╔══██╗██╔════╝╚══██╔══╝" +
-            MORADO + " ██║    ██║██╔═══██╗██╔══██╗██║     ██╔══██╗" + MAGENTA + " ║\n" +
-            "║   " + CIAN + "██████╔╝█████╗     ██║   " +
-            MORADO + " ██║ █╗ ██║██║   ██║██████╔╝██║     ██║  ██║" + MAGENTA + " ║\n" +
-            "║   " + CIAN + "██╔═══╝ ██╔══╝     ██║   " +
-            MORADO + " ██║███╗██║██║   ██║██╔══██╗██║     ██║  ██║" + MAGENTA + " ║\n" +
-            "║   " + CIAN + "██║     ███████╗   ██║   " +
-            MORADO + " ╚███╔███╔╝╚██████╔╝██║  ██║███████╗██████╔╝" + MAGENTA + " ║\n" +
-            "║                                                  ║\n" +
-            "║       " + AMARILLO + "⭐ CUIDA A TU MASCOTA, SUBE DE NIVEL ⭐" + MAGENTA + "       ║\n" +
-            "╚══════════════════════════════════════════════════╝" +
-            RESET);
+        System.out.println(MAGENTA + "╔══════════════════════════════════════════════════════════════════════════════════╗");
+        System.out.println("║ " + CIAN + "    ██████╗ ███████╗████████╗   ██╗    ██╗ ██████╗ ██████╗ ██╗     ██████╗   " + MAGENTA + "║");
+        System.out.println("║ " + CIAN + "    ██╔══██╗██╔════╝╚══██╔══╝   ██║    ██║██╔═══██╗██╔══██╗██║     ██╔══██╗  " + MAGENTA + "║");
+        System.out.println("║ " + MORADO + "    ██████╔╝█████╗     ██║      ██║ █╗ ██║██║   ██║██████╔╝██║     ██║  ██║  " + MAGENTA + "║");
+        System.out.println("║ " + MORADO + "    ██╔═══╝ ██╔══╝     ██║      ██║███╗██║██║   ██║██╔══██╗██║     ██║  ██║  " + MAGENTA + "║");
+        System.out.println("║ " + MORADO + "    ██║     ███████╗   ██║      ╚███╔███╔╝╚██████╔╝██║  ██║███████╗██████╔╝  " + MAGENTA + "║");
+        System.out.println("║                                                                                  ║");
+        System.out.println("║                     " + AMARILLO + "⭐ CUIDA A TU MASCOTA Y SUBE DE NIVEL ⭐" + MAGENTA + "                     ║");
+        System.out.println("╚══════════════════════════════════════════════════════════════════════════════════╝" + RESET);
         System.out.println();
     }
 
     private void mostrarPantallaCompleta() {
-        System.out.println(MAGENTA +
-            "╔══════════════════════════════════════════════════════════════════════════╗");
-        System.out.println(
-            "║  " + CIAN + "🐾🐾  " +
-            MORADO + "██████╗ ███████╗████████╗    ██╗    ██╗ ██████╗ ██████╗ ██╗     ██████╗" +
-            CIAN + "  🐾🐾" + MAGENTA + "  ║");
-        System.out.println(
-            "║        " +
-            AMARILLO + "★ CUIDA A TU MASCOTA, SÚBELA DE NIVEL Y CONVIÉRTETE EN SU MEJOR AMIGO ★" +
-            MAGENTA + "        ║");
-        System.out.println(
-            "╚══════════════════════════════════════════════════════════════════════════╝" + RESET);
+        System.out.println(MAGENTA + "╔══════════════════════════════════════════════════════════════════════════════════╗");
+        System.out.println("║   " + CIAN + "🐾 PET WORLD" + MORADO + " - Cuida a tu compañero, sube de nivel y gana misiones! 🐾         " + MAGENTA + "║");
+        System.out.println("╚══════════════════════════════════════════════════════════════════════════════════╝" + RESET);
 
-        System.out.println();
         mostrarFilaInfoYEstado();
         System.out.println();
-        mostrarFilaInventarioMenuMisiones();
+        mostrarFilaAccionesYMisiones();
         System.out.println();
         mostrarRegistroEventos();
         System.out.println();
-
-        System.out.println(MORADO +
-            "┌──────────────────────────────────────────────────────────────────────────┐");
-        System.out.printf(
-            "│ 💡 CONSEJO: Mantén equilibrados el hambre, energía y felicidad de %-8s │%n",
-            mascota.getNombre());
-        System.out.println(
-            "└──────────────────────────────────────────────────────────────────────────┘"
-            + RESET);
+        
+        // Banner informativo simétrico
+        String textoConsejo = "💡 CONSEJO: Mantén equilibrados los niveles de tu mascota para que no muera.";
+        System.out.println(GRIS + "┌" + "─".repeat(ANCHO_TOTAL - 2) + "┐");
+        System.out.println("│ " + RESET + formatearLinea(textoConsejo, ANCHO_TOTAL - 4) + GRIS + " │");
+        System.out.println("└" + "─".repeat(ANCHO_TOTAL - 2) + "┘" + RESET);
     }
 
     private void mostrarFilaInfoYEstado() {
-        // Se removió la línea correspondiente a la 'Hora' del arreglo visual
-        String[] infoLineas = {
-            MORADO + "╔═══════════════════════════════╗" + RESET,
-            MORADO + "║  " + MAGENTA + "INFORMACIÓN DE TU MASCOTA" + MORADO + "   ║" + RESET,
-            MORADO + "╠═══════════════════════════════╣" + RESET,
-            MORADO + "║  " + RESET + asciiMascota(0) + CIAN + "  ⭐ Nivel      : " + AMARILLO + mascota.getNivel()       + MORADO + "      ║" + RESET,
-            MORADO + "║  " + RESET + asciiMascota(1) + CIAN + "  😊 Estado     : " + AMARILLO + mascota.getEstado()      + MORADO + " ║" + RESET,
-            MORADO + "║  " + RESET + asciiMascota(2) + CIAN + "  💎 Experiencia: " + AMARILLO + mascota.getExperiencia() + "/100" + MORADO + " ║" + RESET,
-            MORADO + "║  " + RESET + asciiMascota(3) + CIAN + "  📅 Día        : " + AMARILLO + mascota.getDias()        + MORADO + "      ║" + RESET,
-            MORADO + "║  " + RESET + asciiMascota(4) + "                             " + MORADO + "║" + RESET,
-            MORADO + "║  " + MAGENTA + " Nombre: " + AMARILLO + mascota.getNombre() + MORADO + "               ║" + RESET,
-            MORADO + "╚═══════════════════════════════╝" + RESET
+        String[] lineasIzq = {
+            MAGENTA + "INFORMACIÓN DE TU MASCOTA" + MORADO,
+            "─────────────────────────",
+            CIAN + " " + asciiMascota(0) + "  Nivel      : " + AMARILLO + mascota.getNivel(),
+            CIAN + " " + asciiMascota(1) + "  Estado     : " + AMARILLO + mascota.getEstado().trim(),
+            CIAN + " " + asciiMascota(2) + "  Experiencia: " + AMARILLO + mascota.getExperiencia() + "/100",
+            CIAN + " " + asciiMascota(3) + "  Nombre     : " + AMARILLO + mascota.getNombre(),
+            CIAN + " " + asciiMascota(4) + "  Monedas    : " + AMARILLO + mascota.getMonedas()
         };
 
-        String[] estadoLineas = {
-            CIAN + "╔══════════════════════════════════════════╗" + RESET,
-            CIAN + "║        " + MAGENTA + "ESTADO DE TU MASCOTA" + CIAN + "               ║" + RESET,
-            CIAN + "╠══════════════════════════════════════════╣" + RESET,
-            CIAN + "║  " + ROJO    + "🍖 HAMBRE  " + barraColor(mascota.getHambre(),    ROJO)    + "  " + alertaHambre()    + CIAN + " ║" + RESET,
-            CIAN + "║                                          ║" + RESET,
-            CIAN + "║  " + AMARILLO + "⚡ ENERGÍA " + barraColor(mascota.getEnergia(),  AMARILLO) + "  " + alertaEnergia()   + CIAN + " ║" + RESET,
-            CIAN + "║                                          ║" + RESET,
-            CIAN + "║  " + MORADO  + "😊 FELICID " + barraColor(mascota.getFelicidad(), MORADO)   + "  " + alertaFelicidad() + CIAN + " ║" + RESET,
-            CIAN + "║                                          ║" + RESET,
-            CIAN + "╚══════════════════════════════════════════╝" + RESET
+        String[] lineasDer = {
+            MAGENTA + "ESTADO DE TU MASCOTA" + CIAN,
+            "────────────────────",
+            ROJO + " 🍖 HAMBRE    " + barraColor(mascota.getHambre(), ROJO) + "  " + alertaHambre(),
+            "",
+            AMARILLO + " ⚡ ENERGÍA   " + barraColor(mascota.getEnergia(), AMARILLO) + "  " + alertaEnergia(),
+            "",
+            MORADO + " 😊 FELICIDAD " + barraColor(mascota.getFelicidad(), MORADO) + "  " + alertaFelicidad()
         };
 
-        for (int i = 0; i < Math.max(infoLineas.length, estadoLineas.length); i++) {
-            String izq = i < infoLineas.length  ? infoLineas[i]  : "";
-            String der = i < estadoLineas.length ? estadoLineas[i] : "";
-            System.out.println(izq + "  " + der);
+        System.out.println(MORADO + "╔" + "═".repeat(ANCHO_IZQ) + "╗  " + CIAN + "╔" + "═".repeat(ANCHO_DER) + "╗" + RESET);
+
+        for (int i = 0; i < Math.max(lineasIzq.length, lineasDer.length); i++) {
+            String lIzq = i < lineasIzq.length ? lineasIzq[i] : "";
+            String lDer = i < lineasDer.length ? lineasDer[i] : "";
+
+            System.out.print(MORADO + "║ " + RESET + formatearLinea(lIzq, ANCHO_IZQ - 2) + MORADO + " ║  ");
+            System.out.print(CIAN + "║ " + RESET + formatearLinea(lDer, ANCHO_DER - 2) + CIAN + " ║\n");
         }
+
+        System.out.println(MORADO + "╚" + "═".repeat(ANCHO_IZQ) + "╝  " + CIAN + "╚" + "═".repeat(ANCHO_DER) + "╝" + RESET);
     }
 
-    private void mostrarFilaInventarioMenuMisiones() {
-        String[] menu = {
-            MAGENTA + "╔══════════════════════════════╗" + RESET,
-            MAGENTA + "║        " + CIAN + "MENÚ PRINCIPAL" + MAGENTA + "          ║" + RESET,
-            MAGENTA + "╠══════════════════════════════╣" + RESET,
-            MAGENTA + "║  " + AMARILLO + "1. 🍖 Alimentar" + GRIS + "   (Aumentar)    " + MAGENTA + "║" + RESET,
-            MAGENTA + "║  " + AMARILLO + "2. 🎮 Jugar    " + GRIS + "   (Divertir)    " + MAGENTA + "║" + RESET,
-            MAGENTA + "║  " + AMARILLO + "3. 💤 Dormir   " + GRIS + "   (+ Energía)   " + MAGENTA + "║" + RESET,
-            MAGENTA + "║  " + AMARILLO + "4. 🚪 Salir                    " + MAGENTA + "║" + RESET,
-            MAGENTA + "║                              ║" + RESET,
-            MAGENTA + "║                              ║" + RESET,
-            MAGENTA + "║                              ║" + RESET,
-            MAGENTA + "║  " + CIAN + "👉 Selecciona una opción: _    " + MAGENTA + "║" + RESET,
-            MAGENTA + "╚══════════════════════════════╝" + RESET
-        };
-
+    private void mostrarFilaAccionesYMisiones() {
         boolean mAlimentar = mascota.getVecesAlimentado() >= 3;
         boolean mJugar     = mascota.getVecesJugado() >= 3;
         boolean mDormir    = mascota.getDurmioHoy();
 
-        // Se removió el texto de la recompensa para dejar los espacios vacíos y simétricos
-        String[] mis = {
-            CIAN + "╔══════════════════════════════╗" + RESET,
-            CIAN + "║     " + MAGENTA + "MISIONES DIARIAS" + CIAN + "          ║" + RESET,
-            CIAN + "╠══════════════════════════════╣" + RESET,
-            CIAN + "║  " + AMARILLO + "🍖 Alimentar 3 veces" + CIAN + "           ║" + RESET,
-            CIAN + "║  " + (mAlimentar ? VERDE + "   ✅ ¡COMPLETADO!      " : barrasMision(mascota.getVecesAlimentado(), 3) + GRIS + " [ " + mascota.getVecesAlimentado() + " / 3 ]") + CIAN + "  ║" + RESET,
-            CIAN + "║                              ║" + RESET,
-            CIAN + "║  " + AMARILLO + "🎮 Jugar 3 veces" + CIAN + "               ║" + RESET,
-            CIAN + "║  " + (mJugar ? VERDE + "   ✅ ¡COMPLETADO!      " : barrasMision(mascota.getVecesJugado(), 3) + GRIS + " [ " + mascota.getVecesJugado() + " / 3 ]") + CIAN + "  ║" + RESET,
-            CIAN + "║                              ║" + RESET,
-            CIAN + "║  " + AMARILLO + "💤 Dormir hoy" + CIAN + "                  ║" + RESET,
-            CIAN + "║  " + (mDormir ? VERDE + "   ✅ ¡COMPLETADO!      " : GRIS + "   ⬜⬜⬜⬜⬜⬜⬜⬜      ") + CIAN + "║" + RESET,
-            CIAN + "║                              ║" + RESET,
-            CIAN + "║                              ║" + RESET,
-            CIAN + "╚══════════════════════════════╝" + RESET
+        String[] lineasIzq = {
+            CIAN + "MENÚ PRINCIPAL" + MAGENTA,
+            "──────────────",
+            AMARILLO + "1. 🍖 Alimentar   " + GRIS + "(Aumentar)",
+            AMARILLO + "2. 🎮 Jugar       " + GRIS + "(Divertir)",
+            AMARILLO + "3. 💤 Dormir      " + GRIS + "(+ Energía)",
+            AMARILLO + "4. 🚪 Salir"
         };
 
-        int max = Math.max(menu.length, mis.length);
-        for (int i = 0; i < max; i++) {
-            String c2 = i < menu.length ? menu[i] : "";
-            String c3 = i < mis.length  ? mis[i]  : "";
-            System.out.println("            " + c2 + "  " + c3);
+        String[] lineasDer = {
+            MAGENTA + "MISIONES DIARIAS" + CIAN,
+            "────────────────",
+            AMARILLO + "🍖 Alimentar 3 veces",
+            (mAlimentar ? VERDE + "   ✅ ¡COMPLETADO!" : "   " + barrasMision(mascota.getVecesAlimentado(), 3) + GRIS + " [ " + mascota.getVecesAlimentado() + " / 3 ]"),
+            AMARILLO + "🎮 Jugar 3 veces",
+            (mJugar ? VERDE + "   ✅ ¡COMPLETADO!" : "   " + barrasMision(mascota.getVecesJugado(), 3) + GRIS + " [ " + mascota.getVecesJugado() + " / 3 ]"),
+            AMARILLO + "💤 Dormir hoy",
+            (mDormir ? VERDE + "   ✅ ¡COMPLETADO!" : GRIS + "   ⬜⬜⬜⬜⬜⬜⬜⬜")
+        };
+
+        System.out.println(MAGENTA + "╔" + "═".repeat(ANCHO_IZQ) + "╗  " + CIAN + "╔" + "═".repeat(ANCHO_DER) + "╗" + RESET);
+
+        for (int i = 0; i < Math.max(lineasIzq.length, lineasDer.length); i++) {
+            String lIzq = i < lineasIzq.length ? lineasIzq[i] : "";
+            String lDer = i < lineasDer.length ? lineasDer[i] : "";
+
+            System.out.print(MAGENTA + "║ " + RESET + formatearLinea(lIzq, ANCHO_IZQ - 2) + MAGENTA + " ║  ");
+            System.out.print(CIAN + "║ " + RESET + formatearLinea(lDer, ANCHO_DER - 2) + CIAN + " ║\n");
         }
+
+        System.out.println(MAGENTA + "╚" + "═".repeat(ANCHO_IZQ) + "╝  " + CIAN + "╚" + "═".repeat(ANCHO_DER) + "╝" + RESET);
     }
 
     private void mostrarRegistroEventos() {
-        System.out.println(MAGENTA +
-            "╔══════════════════════════════════════════════════════════════════════════╗");
-        System.out.println(
-            "║                      REGISTRO DE EVENTOS                                 ║");
-        System.out.println(
-            "╠══════════════════════════════════════════════════════════════════════════╣"
-            + RESET);
+        System.out.println(MAGENTA + "╔" + "═".repeat(ANCHO_TOTAL - 2) + "╗");
+        System.out.println("║" + RESET + formatearCentrado(MAGENTA + "REGISTRO DE EVENTOS" + RESET, ANCHO_TOTAL - 2) + MAGENTA + "║");
+        System.out.println("╠" + "═".repeat(ANCHO_TOTAL - 2) + "╣" + RESET);
 
         int inicio = Math.max(0, registro.size() - 4);
         int mostrados = 0;
+        
         for (int i = inicio; i < registro.size(); i++) {
-            String linea = registro.get(i);
-            String sinAnsi = linea.replaceAll("\u001B\\[[;\\d]*m", "");
-            int pad = ANCHO_REGISTRO - sinAnsi.length();
-            if (pad < 0) pad = 0;
-            System.out.println(GRIS + "║  " + linea + " ".repeat(pad) + GRIS + "║" + RESET);
+            System.out.println(MAGENTA + "║ " + RESET + formatearLinea(registro.get(i), ANCHO_TOTAL - 4) + MAGENTA + " ║" + RESET);
             mostrados++;
         }
         for (int i = mostrados; i < 4; i++) {
-            System.out.println(GRIS + "║  " + " ".repeat(ANCHO_REGISTRO) + "║" + RESET);
+            System.out.println(MAGENTA + "║ " + " ".repeat(ANCHO_TOTAL - 4) + " ║" + RESET);
         }
 
-        System.out.println(MAGENTA +
-            "╚══════════════════════════════════════════════════════════════════════════╝"
-            + RESET);
+        System.out.println(MAGENTA + "╚" + "═".repeat(ANCHO_TOTAL - 2) + "╝" + RESET);
+    }
+
+    private String formatearLinea(String texto, int anchoMaximo) {
+        String textoLimpio = texto.replaceAll("\u001B\\[[;\\d]*m", "");
+        int espacioRelleno = anchoMaximo - textoLimpio.length();
+        if (espacioRelleno > 0) {
+            return texto + " ".repeat(espacioRelleno);
+        }
+        return texto;
+    }
+
+    private String formatearCentrado(String texto, int anchoMaximo) {
+        String textoLimpio = texto.replaceAll("\u001B\\[[;\\d]*m", "");
+        int espacioTotal = anchoMaximo - textoLimpio.length();
+        if (espacioTotal <= 0) return texto;
+        int izq = espacioTotal / 2;
+        int der = espacioTotal - izq;
+        return " ".repeat(izq) + texto + " ".repeat(der);
     }
 
     private void procesarOpcion() {
@@ -239,28 +222,30 @@ public class Juego {
         System.out.print(RESET);
 
         switch (op) {
-
             case "1":
                 mascota.alimentar();
-                agregarRegistro("🍖 Alimentaste a " + mascota.getNombre() + "  +15 XP  +10💰  Hambre -30");
-                if (mascota.getHambre() <= 20)
-                    agregarRegistro("✅ " + mascota.getNombre() + " está satisfecho.");
+                agregarRegistro("🍖 Alimentaste a " + mascota.getNombre());
+                
                 mascota.pasarTiempo();
                 break;
 
             case "2":
                 if (mascota.getEnergia() < 20) {
-                    agregarRegistro("⚠️  " + mascota.getNombre() + " está agotado. ¡Hazlo dormir primero!");
+                    agregarRegistro("⚠️ " + mascota.getNombre() + " está agotado. ¡Hazlo dormir primero!");
                     break;
                 }
                 mascota.jugar();
-                agregarRegistro("🎮 Jugaste con " + mascota.getNombre() + "  +25 XP  +15💰  Energia -10");
+                agregarRegistro("🎮 Jugaste con " + mascota.getNombre());
+                
                 mascota.pasarTiempo();
                 break;
 
             case "3":
                 mascota.dormir();
-                agregarRegistro("💤 " + mascota.getNombre() + " durmió y recuperó energía.  +10 XP  +5💰");
+                
+                // Registro limpio sin el texto de penalización visual
+                agregarRegistro("💤 " + mascota.getNombre() + " se fue a dormir");
+                
                 mascota.pasarTiempo();
                 break;
 
@@ -270,28 +255,27 @@ public class Juego {
                 break;
 
             default:
-                agregarRegistro("⚠️  Opción inválida: \"" + op + "\".");
+                agregarRegistro("⚠️ Opción inválida: \"" + op + "\".");
         }
     }
 
     private void verificarMisiones() {
         if (mascota.getVecesAlimentado() >= 3 && mascota.getVecesJugado() >= 3 && mascota.getDurmioHoy()) {
             mascota.recibirRecompensaMisiones();
-            agregarRegistro("🎉 ¡COMPLETADO! Terminaste todas las misiones. Premio: +100 😊");
+            agregarRegistro("🎉 ¡COMPLETADO! Terminaste todas las misiones.");
             mascota.reiniciarMisionesDiarias();
         }
     }
 
     private void mostrarGameOver() {
-        System.out.println(ROJO +
-            "\n╔══════════════════════════════════════╗\n" +
-            "║          💀 GAME OVER 💀             ║\n" +
-            "║   TU MASCOTA HA FALLECIDO...         ║\n" +
-            "╠══════════════════════════════════════╣\n" +
-            "║  🏆 Nivel alcanzado : " + String.format("%-15d", mascota.getNivel())        + " ║\n" +
-            "║  💎 XP final        : " + String.format("%-15d", mascota.getExperiencia()) + " ║\n" +
-            "║  💰 Monedas         : " + String.format("%-15d", mascota.getMonedas())     + " ║\n" +
-            "╚══════════════════════════════════════╝" + RESET);
+        System.out.println(ROJO + "╔══════════════════════════════════════╗");
+        System.out.println("║          💀 GAME OVER 💀             ║");
+        System.out.println("║   TU MASCOTA HA FALLECIDO...         ║");
+        System.out.println("╠══════════════════════════════════════╣");
+        System.out.printf("║  🏆 Nivel alcanzado : %-14d  ║%n", mascota.getNivel());
+        System.out.printf("║  💎 XP final        : %-14d  ║%n", mascota.getExperiencia());
+        System.out.printf("║  💰 Monedas         : %-14d  ║%n", mascota.getMonedas());
+        System.out.println("╚══════════════════════════════════════╝" + RESET);
     }
 
     private void limpiarPantalla() {
@@ -306,52 +290,46 @@ public class Juego {
     private String barraColor(int valor, String color) {
         int v = Math.max(0, Math.min(100, valor));
         int llenas = v / 10;
-        String barra = color;
-        for (int i = 0; i < llenas; i++)  barra += "█";
-        barra += GRIS;
-        for (int i = llenas; i < 10; i++) barra += "░";
-        barra += RESET + " " + String.format("%3d", v) + "%";
-        return barra;
+        StringBuilder barra = new StringBuilder(color);
+        for (int i = 0; i < llenas; i++) barra.append("█");
+        barra.append(GRIS);
+        for (int i = llenas; i < 10; i++) barra.append("░");
+        barra.append(RESET).append(" ").append(String.format("%3d", v)).append("%");
+        return barra.toString();
     }
 
     private String barrasMision(int actual, int meta) {
         int llenas = Math.min(actual, meta);
-        String b = MORADO;
-        for (int i = 0; i < llenas; i++)  b += "█";
-        b += GRIS;
-        for (int i = llenas; i < meta; i++) b += "░";
-        return b + RESET;
+        StringBuilder b = new StringBuilder(MORADO);
+        for (int i = 0; i < llenas; i++) b.append("█");
+        b.append(GRIS);
+        for (int i = llenas; i < meta; i++) b.append("░");
+        return b.append(RESET).toString();
     }
 
     private String asciiMascota(int linea) {
-        String[] ascii = {
-            CIAN + " /\\_/\\ " + RESET,
-            CIAN + "(  o o  )" + RESET,
-            CIAN + " =( Y )= " + RESET,
-            CIAN + "  )   (  " + RESET,
-            CIAN + " ()-() " + RESET
-        };
-        return linea < ascii.length ? ascii[linea] : "         ";
+        String[] ascii = { " /\\_/\\ ", "(  o o )", " =( Y )=", "  )   ( ", " ()-() " };
+        return ascii[linea];
     }
 
     private String alertaHambre() {
         int h = mascota.getHambre();
-        if (h >= 80) return ROJO     + "¡Peligro!   ";
-        if (h >= 50) return AMARILLO + "Ten cuidado ";
-        return CIAN                  + "Bien        ";
+        if (h >= 80) return ROJO + "¡Peligro!" + RESET;
+        if (h >= 50) return AMARILLO + "Cuidado" + RESET;
+        return VERDE + "Bien   " + RESET;
     }
 
     private String alertaEnergia() {
         int e = mascota.getEnergia();
-        if (e <= 20) return ROJO     + "¡Agotado!   ";
-        if (e >= 60) return CIAN     + "¡Con energía!";
-        return AMARILLO              + "Normal      ";
+        if (e <= 20) return ROJO + "¡Agotado!" + RESET;
+        if (e >= 60) return VERDE + "Activo   " + RESET;
+        return AMARILLO + "Normal   " + RESET;
     }
 
     private String alertaFelicidad() {
         int f = mascota.getFelicidad();
-        if (f <= 30) return ROJO     + "¡Triste!    ";
-        if (f >= 70) return CIAN     + "¡Feliz!     ";
-        return AMARILLO              + "Normal      ";
+        if (f <= 30) return ROJO + "¡Triste! " + RESET;
+        if (f >= 70) return VERDE + "¡Feliz!  " + RESET;
+        return AMARILLO + "Normal   " + RESET;
     }
 }
