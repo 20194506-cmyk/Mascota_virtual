@@ -22,7 +22,6 @@ public class Juego {
     private static final String ROJO     = "\u001B[38;5;196m";
     private static final String VERDE    = "\u001B[38;5;46m";
     
-    // Anchos fijos originales
     private static final int ANCHO_IZQ = 36; 
     private static final int ANCHO_DER = 42; 
     private static final int ANCHO_TOTAL = 82; 
@@ -54,15 +53,24 @@ public class Juego {
         limpiarPantalla();
         mostrarPortada();
 
+        // INTERACCIÓN: Preguntar Nombre
         System.out.print(MAGENTA + " 🐾 ¿Qué nombre le darás a tu mascota?: " + CIAN);
         String nombre = scanner.nextLine().trim();
         if (nombre.isEmpty()) nombre = "Pelusa";
+
+        // INTERACCIÓN NUEVA: Preguntar Género
+        System.out.print(MAGENTA + " ♀️/♂️ ¿Qué género prefieres? (M = Macho / H = Hembra): " + CIAN);
+        String generoInput = scanner.nextLine().trim().toUpperCase();
+        if (!generoInput.equals("M") && !generoInput.equals("H")) generoInput = "M";
+        
         System.out.print(RESET);
 
-        mascota = new Mascota(nombre);
-        agregarRegistro("🐾 ¡" + nombre + " ha nacido! Cuídalo muy bien.");
+        mascota = new Mascota(nombre, generoInput);
+        String articuloArt = mascota.getGenero().equals("Hembra") ? "la" : "lo";
+        agregarRegistro("🐾 ¡" + nombre + " ha nacido! Cuída" + articuloArt + " muy bien.");
 
         while (true) {
+            mascota.verificarVida(); // Validar estado antes de renderizar la UI
             if (!mascota.estaViva()) {
                 limpiarPantalla();
                 mostrarGameOver();
@@ -79,11 +87,11 @@ public class Juego {
         System.out.println(MAGENTA + "╔══════════════════════════════════════════════════════════════════════════════════╗");
         System.out.println("║ " + CIAN + "    ██████╗ ███████╗████████╗   ██╗    ██╗ ██████╗ ██████╗ ██╗     ██████╗   " + MAGENTA + "║");
         System.out.println("║ " + CIAN + "    ██╔══██╗██╔════╝╚══██╔══╝   ██║    ██║██╔═══██╗██╔══██╗██║     ██╔══██╗  " + MAGENTA + "║");
-        System.out.println("║ " + MORADO + "    ██████╔╝█████╗     ██║      ██║ █╗ ██║██║   ██║██████╔╝██║     ██║  ██║  " + MAGENTA + "║");
-        System.out.println("║ " + MORADO + "    ██╔═══╝ ██╔══╝     ██║      ██║███╗██║██║   ██║██╔══██╗██║     ██║  ██║  " + MAGENTA + "║");
+        System.out.println("║ " + MORADO + "    ██████╔╝█████╗      ██║      ██║ █╗ ██║██║   ██║██████╔╝██║     ██║  ██║  " + MAGENTA + "║");
+        System.out.println("║ " + MORADO + "    ██╔═══╝ ██╔══╝      ██║      ██║███╗██║██║   ██║██╔══██╗██║     ██║  ██║  " + MAGENTA + "║");
         System.out.println("║ " + MORADO + "    ██║     ███████╗   ██║      ╚███╔███╔╝╚██████╔╝██║  ██║███████╗██████╔╝  " + MAGENTA + "║");
         System.out.println("║                                                                                  ║");
-        System.out.println("║                     " + AMARILLO + "⭐ CUIDA A TU MASCOTA Y SUBE DE NIVEL ⭐" + MAGENTA + "                     ║");
+        System.out.println("║                      " + AMARILLO + "⭐ CUIDA A TU MASCOTA Y SUBE DE NIVEL ⭐" + MAGENTA + "                      ║");
         System.out.println("╚══════════════════════════════════════════════════════════════════════════════════╝" + RESET);
         System.out.println();
     }
@@ -100,8 +108,7 @@ public class Juego {
         mostrarRegistroEventos();
         System.out.println();
         
-        // Banner informativo simétrico
-        String textoConsejo = "💡 CONSEJO: Mantén equilibrados los niveles de tu mascota para que no muera.";
+        String textoConsejo = "💡 DÍA " + mascota.getDias() + " | Género: " + mascota.getGenero() + " | ¡Completa tareas para ganar recompensas!";
         System.out.println(GRIS + "┌" + "─".repeat(ANCHO_TOTAL - 2) + "┐");
         System.out.println("│ " + RESET + formatearLinea(textoConsejo, ANCHO_TOTAL - 4) + GRIS + " │");
         System.out.println("└" + "─".repeat(ANCHO_TOTAL - 2) + "┘" + RESET);
@@ -115,7 +122,7 @@ public class Juego {
             CIAN + " " + asciiMascota(1) + "  Estado     : " + AMARILLO + mascota.getEstado().trim(),
             CIAN + " " + asciiMascota(2) + "  Experiencia: " + AMARILLO + mascota.getExperiencia() + "/100",
             CIAN + " " + asciiMascota(3) + "  Nombre     : " + AMARILLO + mascota.getNombre(),
-            CIAN + " " + asciiMascota(4) + "  Monedas    : " + AMARILLO + mascota.getMonedas()
+            CIAN + " " + asciiMascota(4) + "  Monedas    : " + AMARILLO + mascota.getMonedas() + " 🪙"
         };
 
         String[] lineasDer = {
@@ -146,23 +153,26 @@ public class Juego {
         boolean mJugar     = mascota.getVecesJugado() >= 3;
         boolean mDormir    = mascota.getDurmioHoy();
 
+        boolean esHembra = mascota.getGenero().equals("Hembra");
+
         String[] lineasIzq = {
             CIAN + "MENÚ PRINCIPAL" + MAGENTA,
             "──────────────",
-            AMARILLO + "1. 🍖 Alimentar   " + GRIS + "(Aumentar)",
-            AMARILLO + "2. 🎮 Jugar       " + GRIS + "(Divertir)",
-            AMARILLO + "3. 💤 Dormir      " + GRIS + "(+ Energía)",
-            AMARILLO + "4. 🚪 Salir"
+            AMARILLO + "1. 🍖 Alimentar    " + GRIS + "(Hambre -20)",
+            AMARILLO + "2. 🎮 Jugar        " + GRIS + "(Diversión)",
+            AMARILLO + "3. 💤 Dormir       " + GRIS + "(Energía +40)",
+            AMARILLO + "4. 🛒 Tienda Virtual" + GRIS + " (¡NUEVO!)",
+            AMARILLO + "5. 🚪 Salir"
         };
 
         String[] lineasDer = {
             MAGENTA + "MISIONES DIARIAS" + CIAN,
             "────────────────",
-            AMARILLO + "🍖 Alimentar 3 veces",
+            AMARILLO + (esHembra ? "🍖 Alimentarla 3 veces" : "🍖 Alimentarlo 3 veces"),
             (mAlimentar ? VERDE + "   ✅ ¡COMPLETADO!" : "   " + barrasMision(mascota.getVecesAlimentado(), 3) + GRIS + " [ " + mascota.getVecesAlimentado() + " / 3 ]"),
-            AMARILLO + "🎮 Jugar 3 veces",
+            AMARILLO + (esHembra ? "🎮 Jugar con ella 3 veces" : "🎮 Jugar con él 3 veces"),
             (mJugar ? VERDE + "   ✅ ¡COMPLETADO!" : "   " + barrasMision(mascota.getVecesJugado(), 3) + GRIS + " [ " + mascota.getVecesJugado() + " / 3 ]"),
-            AMARILLO + "💤 Dormir hoy",
+            AMARILLO + "💤 Mandarlo a dormir hoy",
             (mDormir ? VERDE + "   ✅ ¡COMPLETADO!" : GRIS + "   ⬜⬜⬜⬜⬜⬜⬜⬜")
         };
 
@@ -221,35 +231,39 @@ public class Juego {
         String op = scanner.nextLine().trim();
         System.out.print(RESET);
 
+        boolean esHembra = mascota.getGenero().equals("Hembra");
+
         switch (op) {
             case "1":
                 mascota.alimentar();
                 agregarRegistro("🍖 Alimentaste a " + mascota.getNombre());
-                
                 mascota.pasarTiempo();
                 break;
 
             case "2":
+                if (mascota.getCampanaAvisosEnergia()) {
+                     // Logica controlada
+                }
                 if (mascota.getEnergia() < 20) {
-                    agregarRegistro("⚠️ " + mascota.getNombre() + " está agotado. ¡Hazlo dormir primero!");
+                    agregarRegistro("⚠️ " + mascota.getNombre() + (esHembra ? " está agotada. " : " está agotado. ") + "¡Hazlo dormir!");
                     break;
                 }
                 mascota.jugar();
                 agregarRegistro("🎮 Jugaste con " + mascota.getNombre());
-                
                 mascota.pasarTiempo();
                 break;
 
             case "3":
                 mascota.dormir();
-                
-                // Registro limpio sin el texto de penalización visual
-                agregarRegistro("💤 " + mascota.getNombre() + " se fue a dormir");
-                
+                agregarRegistro("💤 " + mascota.getNombre() + " se fue a dormir.");
                 mascota.pasarTiempo();
                 break;
 
             case "4":
+                abrirTienda(); // Nueva sección interactiva
+                break;
+
+            case "5":
                 System.out.println(CIAN + "\n👋 ¡Gracias por jugar PET WORLD!" + RESET);
                 System.exit(0);
                 break;
@@ -259,22 +273,65 @@ public class Juego {
         }
     }
 
+    // INTERACCIÓN ADICIONAL: Menú de Tienda Virtual interactiva
+    private void abrirTienda() {
+        limpiarPantalla();
+        System.out.println(AMARILLO + "╔══════════════════════════════════════════╗");
+        System.out.println("║          🛒 TIENDA VIRTUAL PET           ║");
+        System.out.println("╠══════════════════════════════════════════╣");
+        System.out.println("║ Tus Monedas actuales: " + mascota.getMonedas() + " 🪙            ║");
+        System.out.println("║                                          ║");
+        System.out.println("║ 1. 🍪 Galleta Premium  (Coste: 30 🪙)    ║");
+        System.out.println("║ 2. ⚽ Pelota Nueva     (Coste: 50 🪙)    ║");
+        System.out.println("║ 3. 🧪 Poción Energía   (Coste: 60 🪙)    ║");
+        System.out.println("║ 4. ↩️ Volver al menú                     ║");
+        System.out.println("╚══════════════════════════════════════════╝" + RESET);
+        System.out.print(MAGENTA + "Selecciona un artículo para comprar: " + CIAN);
+        
+        String tOp = scanner.nextLine().trim();
+        switch (tOp) {
+            case "1":
+                efectuarCompra(30, "🍪 Compraste una Galleta Premium", 1);
+                break;
+            case "2":
+                efectuarCompra(50, "⚽ Compraste un Juguete nuevo", 2);
+                break;
+            case "3":
+                efectuarCompra(60, "🧪 Compraste una Poción Energética", 3);
+                break;
+            default:
+                agregarRegistro("🛒 Saliste de la tienda.");
+                break;
+        }
+    }
+
+    private void efectuarCompra(int costo, String mensajeExito, int tipoItem) {
+        if (mascota.getMonedas() >= costo) {
+            mascota.gastarMonedas(costo);
+            mascota.usarItem(tipoItem);
+            agregarRegistro("🎉 " + mensajeExito + " para " + mascota.getNombre());
+        } else {
+            agregarRegistro("❌ No tienes suficientes monedas para este artículo.");
+        }
+    }
+
+    // RECOMPENSAS MEJORADAS: Ahora el usuario gana un boost masivo de Monedas y XP
     private void verificarMisiones() {
         if (mascota.getVecesAlimentado() >= 3 && mascota.getVecesJugado() >= 3 && mascota.getDurmioHoy()) {
             mascota.recibirRecompensaMisiones();
-            agregarRegistro("🎉 ¡COMPLETADO! Terminaste todas las misiones.");
+            agregarRegistro("🎁 ¡MISIÓN DIARIA COMPLETADA! Obtienes +100 Monedas y +50 XP.");
             mascota.reiniciarMisionesDiarias();
         }
     }
 
     private void mostrarGameOver() {
         System.out.println(ROJO + "╔══════════════════════════════════════╗");
-        System.out.println("║          💀 GAME OVER 💀             ║");
+        System.out.println("║         💀 GAME OVER 💀              ║");
         System.out.println("║   TU MASCOTA HA FALLECIDO...         ║");
         System.out.println("╠══════════════════════════════════════╣");
         System.out.printf("║  🏆 Nivel alcanzado : %-14d  ║%n", mascota.getNivel());
         System.out.printf("║  💎 XP final        : %-14d  ║%n", mascota.getExperiencia());
-        System.out.printf("║  💰 Monedas         : %-14d  ║%n", mascota.getMonedas());
+        System.out.printf("║  💰 Monedas ganadas : %-14d  ║%n", mascota.getMonedas());
         System.out.println("╚══════════════════════════════════════╝" + RESET);
     }
 
